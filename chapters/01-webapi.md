@@ -2,7 +2,7 @@
 
 > 執筆者：高木宏輔
 > 
-> 最終更新：2026-04-15
+> 最終更新：2026-04-17
 
 ## この章で学ぶこと
 
@@ -35,7 +35,6 @@ struct Song: Codable, Identifiable {
     let artistName: String
     let artworkUrl100: String
     let previewUrl: String?
-
     var id: Int { trackId }
 }
 
@@ -149,30 +148,44 @@ struct SongRow: View {
 
 
 ```swift
-// ここに模範コード全体を貼る
-
-
 ```
 
 **このアプリは何をするものか：**
 
-（アプリの動作を自分の言葉で説明する。スクリーンショットを貼ってもよい。）
+iTunesのAPIを使用し音楽を検索できるアプリ。
 
 ## コードの詳細解説
 
 ### データモデル（Codable構造体）
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+struct SearchResponse: Codable {
+    let results: [Song]
+}
+
+struct Song: Codable, Identifiable {
+    let trackId: Int
+    let trackName: String
+    let artistName: String
+    let artworkUrl100: String
+    let previewUrl: String?
+
+    var id: Int { trackId }
 ```
 
 **何をしているか：**
-（この部分が果たしている役割を説明する）
+
+Codableを構造体に使用することでJsonの構造体に合わせて変換できるようにし対応させている。
 
 **なぜこう書くのか：**
-（別の書き方ではなく、この書き方が選ばれている理由を説明する）
+
+・SearchResponseを使うことによってAPIの形に合わせる
+・Codableを使い安全かつ簡単に変換する
+・IdentifiableはUIで扱いやすくする
+・不完全データに対応するためにOptionalを使用する
 
 **もしこう書かなかったら：**
+
 （この部分を省略したり変えたりすると何が起きるか。実際に試した結果があればここに書く）
 
 ---
@@ -180,7 +193,6 @@ struct SongRow: View {
 ### API通信の処理
 
 ```swift
-// 該当部分のコードを抜粋して貼る
 ```
 
 **何をしているか：**
