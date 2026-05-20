@@ -1,11 +1,9 @@
 # 第2章：地図アプリの基本
 
 > 執筆者：高木　宏輔
-> 最終更新：2026-05-08
+> 最終更新：2026-05-20
 
 ## この章で学ぶこと
-
-（この章で扱うトピックの概要を2〜3行で書く。自分の言葉で。）
 
 この章では、SwiftUIとMapkitを使用して地図アプリを作成する基本を学び観光スポットの情報を構造体で管理しMapKitを使用し地図上に複数のマーカーを表示する詳細情報をカード形式で表示する。
 
@@ -229,7 +227,7 @@ struct LandmarkCard: View {
 
 **このアプリは何をするものか：**
 
-（アプリの動作を自分の言葉で説明する。スクリーンショットを貼ってもよい。）
+SwiftUIとMapKitフレームワークを使用して、地図上に東京の観光スポットを表示するiOSアプリ
 
 ## コードの詳細解説
 
@@ -282,11 +280,10 @@ struct Landmark: Identifiable, Hashable {
 ```
 
 **何をしているか：**
-（この部分が果たしている役割を説明する）
 ランドマークの基本情報、座標、およびカテゴリ別のスタイル（アイコンや色）を管理する役割を担っています。
 
 **なぜこう書くのか：**
-（別の書き方ではなく、この書き方が選ばれている理由を説明する）
+
 この書き方は、「MapKitの高度な機能（タップ選択）を使いつつ、将来的にカテゴリやデータが増えても壊れにくい、メンテナンス性の高い設計」を目指した結果と言えます。アプリとして実用的な機能（選択・抽出・整理）を持たせるには、この構成が最もバランスの良い正攻法です。
 
 **もしこう書かなかったら：**
@@ -297,42 +294,117 @@ struct Landmark: Identifiable, Hashable {
 ### 地図の表示とカメラ制御
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+@State private var cameraPosition: MapCameraPosition = .region(
+    MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671), // 東京駅付近
+        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)       // ズーム倍率
+    )
+)
+Map(position: $cameraPosition, selection: $selectedLandmark) {
+    // ここにマーカーなどのコンテンツを配置
+}
+.mapStyle(.standard(elevation: .realistic)) // 地図のスタイル設定
+.onMapCameraChange { context in
+    // 地図の操作に応じた処理を追加できる
+    // 例：現在の中心座標をログに出す、表示範囲に合わせてデータを再読み込みするなど
+}
 ```
 
 **何をしているか：**
 
+まず、カメラが「どこを、どのくらいの範囲で映すか」を保持する変数、body 内で地図をレンダリングしている部分、ユーザーが地図をスクロールしたりピンチイン・アウトしたことを検知するトリガーです。
+
 **なぜこう書くのか：**
 
+この書き方をする最大のメリットは、「地図という複雑なUIを、ただの変数の更新として扱えるようになる」ことです。
+地図の状態（データ）はどうあるべきかを記述するだけで済むようになります。
+
 **もしこう書かなかったら：**
+
+今の書き方をしなかったら、地図の状態を管理するための管理職（コード）が大量に必要になる
 
 ---
 
 ### マーカーの表示
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+ForEach(filteredLandmarks) { landmark in
+    Marker(
+        landmark.name,                           // マーカーの下に表示されるタイトル
+        systemImage: landmark.category.iconName, // アイコン（SF Symbols）
+        coordinate: landmark.coordinate          // 緯度・経度
+    )
+    .tint(landmark.category.color)               // マーカーの色
+    .tag(landmark)                               // タップ判定用の識別子
+}
 ```
 
 **何をしているか：**
 
+地図上に標準的な形のマーカーを表示します。カテゴリに合わせて「お寺（建物の柱）」「タワー（電波）」「公園（葉っぱ）」のアイコンを表示します。
+マーカーの土台の色（赤、青、緑など）を指定します。このマーカーに「このデータ（landmark）ですよ」という印を付けます。
+
 **なぜこう書くのか：**
+
+文字だけでなくアイコンがあることで、ユーザーが直感的に「そこが何の場所か」を判別できるようにするためです。カテゴリごとに色を分けることで、視認性を高めています。Map(selection: $selectedLandmark) と連動しており、ユーザーがピンをタップした際、この .tag に設定したデータが自動的に selectedLandmark という変数に代入されます。これにより「タップされた場所の詳細を表示する」という動きが実現できます。
 
 **もしこう書かなかったら：**
 
+もし Marker ではなく、自分でもっと自由にデザインしたい場合（例えばスポットの写真を表示したい場合など）は、Annotation というパーツを使います。
+
+---
+```swift
+// デザインを自由に変えたい場合の例
+Annotation(landmark.name, coordinate: landmark.coordinate) {
+    Image(systemName: "star.fill") // 星型にしたり、画像にしたりできる
+        .padding(4)
+        .background(Color.yellow)
+        .clipShape(Circle())
+}
+```
 ---
 
 ### フィルター機能
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+// カテゴリのセット（重複のない集合）を保持
+// 初期状態は全カテゴリ(allCases)が入っている
+@State private var selectedCategories: Set<Landmark.Category> = Set(Landmark.Category.allCases)
+var filteredLandmarks: [Landmark] {
+    // 全データ（sampleData）をチェック
+    Landmark.sampleData.filter { landmark in
+        // その場所のカテゴリが、選択中のセットに含まれているものだけを残す
+        selectedCategories.contains(landmark.category)
+    }
+}
+Button {
+    if selectedCategories.contains(category) {
+        // すでに選択されていたら、除外する
+        selectedCategories.remove(category)
+    } else {
+        // 選択されていなかったら、追加する
+        selectedCategories.insert(category)
+    }
+} label: {
+    // 見た目の処理（選択中なら色を付け、そうでなければグレーにする）
+}
 ```
 
 **何をしているか：**
 
+まず、「今どのボタンが押されているか」を記録しておく場所です。
+全データの中から、地図に表示するものだけを抽出するフィルターの本体です。
+ユーザーが画面下のボタンをタップした時の処理です。
+
 **なぜこう書くのか：**
 
+なぜ Set か: 「寺社」と「公園」のように複数選択が可能で、かつ「すでにあるなら消す、ないなら入れる」という処理が高速に行えるためです。
+元データを直接書き換えるのではなく、「今の選択状況なら、このリストが見えるはず」という計算結果をリアルタイムで導き出すためです。ボタンを押して selectedCategories が変わるたびに、この計算が走り、地図上のピンがパッと消えたり現れたりします。
+ON/OFFの切り替え（トグル動作）を実現するためです。このボタン操作によって selectedCategories が更新されると、上記（2番）の filteredLandmarks が自動的に再計算され、最終的に Map の表示が更新されるという連鎖が起きます。
+
 **もしこう書かなかったら：**
+
+「データ」と「表示」を切り離してバラバラに命令すると、コードが複雑に絡み合い、ボタンの操作と地図の表示が一致しなくなる「状態の矛盾（バグ）」を引き起こす原因になります。
 
 ---
 
