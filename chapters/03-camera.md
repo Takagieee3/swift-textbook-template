@@ -183,11 +183,23 @@ iPhoneのカメラや写真ライブラリを使って、好きな画像をア�
 ### PhotosPickerによる写真選択
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+@State private var selectedItem: PhotosPickerItem? // 選択された情報を保持
+@State private var selectedImage: Image?          // 実際に表示する画像を保持
+// フォトライブラリから選択
+PhotosPicker(selection: $selectedItem, matching: .images) {
+    Label("ライブラリ", systemImage: "photo.on.rectangle")
+}
+.buttonStyle(.bordered)
+// フォトライブラリから選択
+PhotosPicker(selection: $selectedItem, matching: .images) {
+    Label("ライブラリ", systemImage: "photo.on.rectangle")
+}
+.buttonStyle(.bordered)
 ```
 
 **何をしているか：**
-（この部分が果たしている役割を説明する）
+
+ユーザーが写真を選んだ瞬間にそのデータがアプリ内に取り込まれ、画面が更新される仕組みになっている。
 
 **なぜこう書くのか：**
 （別の書き方ではなく、この書き方が選ばれている理由を説明する）
