@@ -2,21 +2,36 @@
 
 ## 使用した生成AIツール
 
-（例：ChatGPT 無料版 / Claude 無料版 / Gemini など）
+Gemini
 
 ## 質問と回答の記録
 
 ### Q1
 
 **質問：**
-（生成AIに聞いた質問をそのまま書く）
+カメラビューの func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    の部分は何を表していますか
+    
 **AIの回答の要点：**
-（長い回答の場合、要点だけ自分の言葉でまとめる）
+
+そのコードは、「SwiftUIという新しい仕組み」の中で、「UIKitという昔ながらの部品（カメラ機能など）」を動かすための橋渡し役を表しています。
+1. updateUIViewController
+役割：SwiftUI側のデータが変わった時に、カメラ画面を更新する
+SwiftUIの画面が再描画されたときに呼び出されるメソッドです。
+なぜ必要か: SwiftUIは「データが変わったら画面を書き換える」仕組みですが、UIKit（カメラ画面）は「命令を受け取って動く」仕組みです。そのため、SwiftUI側の状態（例えばカメラのズーム倍率など）が変わった際に、それをカメラ画面に反映させるためにこの中身を記述するため
+
+2. makeCoordinator
+役割：カメラ画面で起きた出来事（写真撮影など）をSwiftUIに伝える「連絡係」を作る
+UIKitの部品は、自分の力だけではSwiftUIの変数（@Binding など）を書き換えることができません。そこで、中継役となる Coordinator（コーディネーター） というクラスを生成します。
+なぜ必要か: ユーザーが「シャッターボタンを押した」「キャンセルした」というイベントを検知し、その結果（撮影した写真データなど）をSwiftUI側に持ち帰るために必要だから
 
 **自分の理解：**
-（回答を受けて自分がどう理解したか。納得できたか、さらに疑問が生まれたか）
 
+updateUIViewControllerはカメラ画面への伝言板の役目を果たし、makeCoordinatorはカメラ画面への連絡係を設置するそれぞれの役割がある。
 ### Q2
 
 **質問：**
