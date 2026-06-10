@@ -255,21 +255,82 @@ func loadImage(from item: PhotosPickerItem?) async {
 
 **もしこう書かなかったら：**
 
-
+Taskもawaitも使わない場合写真を選ぶたび重い処理を同時に行うため数秒フリーズしてしまう。
+try,do-catchを書かなかった場合コンパイルエラーになる。
 
 ---
 
 ### UIViewControllerRepresentableによるカメラ連携
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+struct CameraView: UIViewControllerRepresentable {
+    @Binding var capturedImage: UIImage? // 撮影した写真を上の画面に返すための双方向ピン
+    @Environment(\.dismiss) private var dismiss // 画面を閉じるための機能
+
+    // ① UIKitのカメラ画面（UIImagePickerController）を作成して初期設定する
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera // 「カメラを起動してね」という指定
+        picker.delegate = context.coordinator // 撮影などのイベントを管理役に任せる
+        return picker
+    }
+
+    // 画面の更新処理（今回はカメラを表示するだけなので空っぽでOK）
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    // ② イベントを中継する管理役（Coordinator）を作る
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    // ③ 管理役のクラス（カメラの「撮影完了」「キャンセル」のイベントをキャッチする）
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraView
+
+        init(_ parent: CameraView) {
+            self.parent = parent
+        }
+
+        // 写真の撮影が完了した時に呼ばれるUIKitのデリゲートメソッド
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            // 撮影されたオリジナル画像を取り出す
+            if let image = info[.originalImage] as? UIImage {
+                parent.capturedImage = image // 上の画面に変数を渡す
+            }
+            parent.dismiss() // カメラ画面を閉じる
+        }
+
+        // キャンセルボタンが押された時に呼ばれる
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss() // カメラ画面を閉じる
+        }
+    }
+}
 ```
 
 **何をしているか：**
 
+makeUIViewController: UIKitの世界からカメラ画面（UIImagePickerController）を借りてくる。Coordinator: カメラ画面でユーザーの行動を見張る監視役。
+Binding: 監視役がキャッチした写真を、SwiftUIの世界（ContentView）へ届ける。
+
 **なぜこう書くのか：**
 
+SwiftUIの画面の中に、UIKitの画面（ViewController）を埋め込むための「翻訳マウンター（アダプター）」が必要だから。
+
+SwiftUIは「データが変わったら画面が変わる」というシンプルな構造をしていますが、UIKitのカメラは「写真が撮られたら、あらかじめ指定された代理人（delegate）の関数を呼び出す」という、全く異なるイベント駆動の仕組みで動いています。
+
+普通の変数（var）で渡してしまうと、カメラ画面の中で「写真が撮れたよ！」と変数に代入しても、メイン画面（ContentView）側はそのことに気づけず、画面に写真が表示されません。
+
 **もしこう書かなかったら：**
+
+・翻訳枠（Representable）を忘れると：そもそもカメラを画面に置けない（ビルドエラー）
+
+・監視役（Coordinator）を忘れると：シャッターを押しても写真を受け取れず、画面も閉じない
+
+・パイプ（Binding）を忘れると：写真は撮れるのに、メイン画面が切り替わらない
 
 ---
 
