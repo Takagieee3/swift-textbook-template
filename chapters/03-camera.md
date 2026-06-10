@@ -206,21 +206,56 @@ PhotosPicker(selection: $selectedItem, matching: .images) {
 ユーザーがこれと選んだその1枚だけのデータがアプリに渡される仕組みなので、安全性が非常に高いかつawaitを使うことで、読み込みが終わるまで、この処理は裏側で待機させてね。その間、他の画面操作は止めないでねという命令をしている。
 
 **もしこう書かなかったら：**
-（この部分を省略したり変えたりすると何が起きるか。実際に試した結果があればここに書く）
+
+AIから最も手軽で安全な標準の書き方と評されている。
+
+ifこう書かなかったら
+
+・連動を忘れると：写真を選んでも画面が変わらない
+・フィルターを忘れると：動画が選ばれてアプリが困惑する
 
 ---
 
 ### 画像の非同期読み込み
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+.onChange(of: selectedItem) { _, newItem in
+    // Task { ... } を使うことで「ここから先は非同期（裏側）でやってね」と指示する
+    Task {
+        await loadImage(from: newItem) // await で処理の完了を待つ
+    }
+}
+// async がついているため、この関数全体が非同期で実行される
+func loadImage(from item: PhotosPickerItem?) async {
+    guard let item = item else { return }
+
+    do {
+        // try await：データの読み込みが終わるまで、この行で「一時停止」して待つ
+        if let data = try await item.loadTransferable(type: Data.self),
+           let uiImage = UIImage(data: data) {
+            
+            // 読み込みと変換がすべて完了したら、最後にメイン画面の画像（@State）を更新する
+            selectedImage = Image(uiImage: uiImage)
+        }
+    } catch {
+        print("画像の読み込みに失敗: \(error.localizedDescription)")
+    }
+}
 ```
 
 **何をしているか：**
 
+写真が選ばれたことを検知する(.onChange)をしTaskを使うことでバックグラウンド処理の指示、データの読み込みを「待ち合わせ」する(try await)を使い最後の selectedImage = Image(uiImage: uiImage) で変数に画像がセットされたら写真が表示される。
+
 **なぜこう書くのか：**
 
+・Task で重い処理を裏側に放り投げて、画面のフリーズを防ぐため。
+・await で、複雑な裏側処理を「上から下へ」読みやすく書くため。
+・try で、データ破損などの予期せぬエラーからアプリが落ちるのを守るため。
+
 **もしこう書かなかったら：**
+
+
 
 ---
 
