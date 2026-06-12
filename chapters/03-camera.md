@@ -337,14 +337,66 @@ SwiftUIは「データが変わったら画面が変わる」というシンプ�
 ### Coordinatorパターン
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+
+// ③ 管理役のクラス（カメラの「撮影完了」「キャンセル」のイベントをキャッチする）
+class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    let parent: CameraView // 親であるSwiftUIのビュー（CameraView）への参照
+
+    // 初期化時に親の情報を教えてもらう
+    init(_ parent: CameraView) {
+        self.parent = parent
+    }
+
+    // ユーザーがシャッターを押して、写真の撮影が完了した時にUIKitから呼び出される
+    func imagePickerController(
+        _ picker: UIImagePickerController,
+        didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+    ) {
+        // 1. 撮影されたオリジナル画像を取り出す
+        if let image = info[.originalImage] as? UIImage {
+            parent.capturedImage = image // 2. 親の@Bindingを経由して、SwiftUI側にデータを届ける
+        }
+        parent.dismiss() // 3. カメラ画面を閉じる
+    }
+
+    // ユーザーがカメラ画面の「キャンセル」ボタンを押した時に呼び出される
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        parent.dismiss() // カメラ画面を閉じる
+    }
+}
+// ① UIKitのカメラ画面を作成する
+func makeUIViewController(context: Context) -> UIImagePickerController {
+    let picker = UIImagePickerController()
+    picker.sourceType = .camera
+    
+    // context.coordinator（システムが自動管理している上のCoordinator）を、
+    // カメラの「デリゲート（代理人）」として設定する
+    picker.delegate = context.coordinator 
+    
+    return picker
+}
+
+// ② システムに「このビューの管理役はあのCoordinatorクラスだよ」と教える関数
+func makeCoordinator() -> Coordinator {
+    Coordinator(self) // 自分自身（CameraView）を渡してインスタンス化
+}
+
 ```
 
 **何をしているか：**
 
+1.makeCoordinator どんな能力を持ち、何が起きたらどう動くかという「行動マニュアル」を定義する秘書が雇われる。
+2.picker.delegate = ... で、カメラに「連絡は秘書へ」と伝える。
+3.ユーザーがシャッターを押すと、カメラはimagePickerController(...) を使って秘書に連絡する。
+4.連絡を受けた秘書が、写真を社長（SwiftUI）に届けて、カメラ画面を閉じる。
+
 **なぜこう書くのか：**
 
+SwiftUI（構造体）は「待ち伏せ」ができないから
+
 **もしこう書かなかったら：**
+
+もしこのお作法を無視して、SwiftUI の中で直接カメラのイベントを受け取ろうとすると、「そもそもコードがコンパイルエラーになる」か、運良く動いたとしても「シャッターを押した瞬間に画面のデータが消え去ってカメラから写真を受け取れない」というバグに直面します。
 
 ---
 
