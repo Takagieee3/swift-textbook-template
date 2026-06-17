@@ -52,7 +52,7 @@
 
 | 回 | 相手の名前 | ファイル |
 |---|----------|---------|
-| 第1回（第3回授業） | | [peer-reviews/review-01.md](peer-reviews/review-01.md) |
-| 第2回（第5回授業） | | [peer-reviews/review-02.md](peer-reviews/review-02.md) |
+| 第1回（第3回授業） |関根拓斗 | [peer-reviews/review-01.md](peer-reviews/review-01.md) |
+| 第2回（第5回授業） |関根拓斗 | [peer-reviews/review-02.md](peer-reviews/review-02.md) |
 | 第3回（第7回授業） | | [peer-reviews/review-03.md](peer-reviews/review-03.md) |
 | 第4回（第11回授業） | | [peer-reviews/review-04.md](peer-reviews/review-04.md) |
