@@ -291,10 +291,35 @@ titleやcreateAtなど内部のプロパティが自動的にデータベース�
 ### データの追加・削除（modelContext）
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+ToolbarItem(placement: .confirmationAction) {
+    Button("保存") {
+        // 1. 入力されたタイトルと内容で、新しいMemoインスタンス（オブジェクト）を作成
+        let memo = Memo(title: title, content: content)
+        
+        // 2. modelContextを使ってデータベースに挿入（保存）
+        modelContext.insert(memo)
+        
+        dismiss()
+    }
+    .disabled(title.isEmpty)
+}
+func deleteMemos(at offsets: IndexSet) {
+    for index in offsets {
+        // 1. 削除対象の行（インデックス）から、該当するMemoオブジェクトを特定
+        let memo = displayedMemos[index]
+        
+        // 2. modelContextを使ってデータベースから削除
+        modelContext.delete(memo)
+    }
+}
 ```
 
 **何をしているか：**
+
+ユーザーが入力したタイトルと内容をもとに、新しく作ったメモのデータ（memo）をデータベースのテーブルに新しく追加（登録）しています
+modelContext.insert(memo)
+ユーザーが画面上でスワイプして削除しようとした特定のメモを特定し、それをデータベースから完全に削除しています。
+modelContext.delete(memo)
 
 **なぜこう書くのか：**
 
