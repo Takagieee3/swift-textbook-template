@@ -335,16 +335,27 @@ modelContext.delete(memo)
 
 
 **もしこう書かなかったら：**
+見た目が悪くなるだけでなく、データが壊れたり勝手に消えたりする危険なアプリになってしまう。
 
 ---
 
 ### @Queryによるデータ取得
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+// MARK: - メインビュー
+
+struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    
+    // ↓ ここが @Query によるデータ取得部分です
+    @Query(sort: \Memo.createdAt, order: .reverse) private var memos: [Memo]
+    
+    @AppStorage("sortByFavorite") private var sortByFavorite: Bool = false
 ```
 
 **何をしているか：**
+@Query というマクロを配列Memoの前に付けるだけで、SwiftDataが背後にあるデータベースからすべての Memo データを自動的に引っ張ってきて、このmemos変数に格納してくれます。
+引数の (sort: \Memo.createdAt, order: .reverse) によって、作成日時（createdAt）が新しい順（reverse＝降順)に並んだ状態でデータが取得されます。
 
 **なぜこう書くのか：**
 
