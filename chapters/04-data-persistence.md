@@ -294,6 +294,7 @@ do {
 }
 ```
 このようなものを書かなければならず冗長になると思いました。
+
 ---
 
 ### データの追加・削除（modelContext）
@@ -355,36 +356,60 @@ struct ContentView: View {
 
 **何をしているか：**
 @Query というマクロを配列Memoの前に付けるだけで、SwiftDataが背後にあるデータベースからすべての Memo データを自動的に引っ張ってきて、このmemos変数に格納してくれます。
-引数の (sort: \Memo.createdAt, order: .reverse) によって、作成日時（createdAt）が新しい順（reverse＝降順)に並んだ状態でデータが取得されます。
+引数の `(sort: \Memo.createdAt, order: .reverse) `によって、作成日時（createdAt）が新しい順（reverse＝降順)に並んだ状態でデータが取得されます。
 
 **なぜこう書くのか：**
+データベースを常に監視する役割がありデータの追加・編集・削除が行われると感知しListを自動的に最新状態
+に再描画してくれるから。またコード量が減りバグが少なく済む。
 
 **もしこう書かなかったら：**
+
+@Queryがない場合
+
+1.取得したデータを保持しておくための `@State private var memos: Memo = []`
+
+2.データベースからデータを取ってくるための関数 `func fetchMemos()`（エラーハンドリングの do-catch 文付き）
+
+3.画面が表示された瞬間にその関数を実行する `.onAppear { fetchMemos() }`
+
+4.新しいメモを追加・削除・編集した後に、手動で再度データを読み直すための fetchMemos() の呼び出し
+これらが必要になる。また並び替えの順番など後からの変更が面倒になる。
 
 ---
 
 ### @AppStorageによる設定保存
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+// MARK: - メインビュー
+
+struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Memo.createdAt, order: .reverse) private var memos: [Memo]
+    
+    // ↓ ここが @AppStorage による設定保存の部分
+    @AppStorage("sortByFavorite") private var sortByFavorite: Bool = false
+    @AppStorage("userName") private var userName: String = ""
+    
+    @State private var isShowingAddSheet = false
 ```
 
 **何をしているか：**
+この部分では、「ユーザーの名前」や「アプリの表示設定（お気に入り優先）」といった、アプリ全体の気軽な設定データをスマホ内に保存（永続化）しています。変数の中身を書き換えた瞬間に、裏側で自動的に保存処理まで完了してくれる。
 
 **なぜこう書くのか：**
+SwiftDataメモのように同じ形のデータが1件、2件、100件…と増えていくものなど値が変わったら画面をリロードするため保存するのに向いているから。
 
 **もしこう書かなかったら：**
+通常のUserDefaultsには、SwiftUIの画面を再描画させる機能がありませんなので設定を変えても画面が更新されないバグが起きる。
 
 ---
-
-（必要に応じてセクションを増やす）
 
 ## 新しく学んだSwiftの文法・API
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`@Model` | SwiftDataでオブジェクトを永続化するためのマクロ | `@Model final class Memo { ... }` |
-| 例：`@Query` | データベースからデータを取得し、変更を自動で反映するプロパティラッパー | `@Query var memos: [Memo]` |
+|`@AppStorage` | アプリの設定データを、スマホ内に超カンタンに保存・自動同期できる、SwiftUI専用のプロパティラッパー | `@AppStorage("sortByFavorite") private var sortByFavorite: Bool = false` |
+|`ModelContext` | 「追加（.insert()）」や「削除（.delete()）を、オブジェクトをそのまま放り込むだけで直感的に指示する文法。 | `@Environment(\.modelContext)` |
 | | | |
 | | | |
 | | | |
