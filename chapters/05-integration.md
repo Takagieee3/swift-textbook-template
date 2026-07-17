@@ -354,24 +354,51 @@ struct RecordDetailView: View {
 
 **このアプリは何をするものか：**
 
-（アプリの動作を自分の言葉で説明する。スクリーンショットを貼ってもよい。）
+写真といる場所をGPSを使いセットで記録してくれる。またライブラリから写真を選びタイトルやメモを添えて保存します。地図を開くと保存した写真のアイコンが地図上に表示される。リストで表示し日付順で表示され不要になったら簡単に削除可能である。
 
 ## コードの詳細解説
 
 ### データモデルの設計
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+@Model
+class PhotoRecord {
+    var title: String
+    var memo: String
+    var latitude: Double
+    var longitude: Double
+    var imageData: Data?
+    var createdAt: Date
+
+    init(title: String, memo: String = "", latitude: Double, longitude: Double, imageData: Data? = nil) {
+        self.title = title
+        self.memo = memo
+        self.latitude = latitude
+        self.longitude = longitude
+        self.imageData = imageData
+        self.createdAt = .now
+    }
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    var uiImage: UIImage? {
+        guard let data = imageData else { return nil }
+        return UIImage(data: data)
+    }
+}
 ```
 
 **何をしているか：**
-（この部分が果たしている役割を説明する）
+１つの思い出のデータの設計図を定義している。タイトルやメモといったテキスト情報、位置情報、画像データ、作成日時を1つのオブジェクトとしてパッケージ化し、それをデバイスのフォルダに永久保存できるようにしています。
 
 **なぜこう書くのか：**
-（別の書き方ではなく、この書き方が選ばれている理由を説明する）
+@Modelをつけることにより、Swiftが自動でDBのテーブルを作成しデータの追加・削除・自動保存を行える。
+UIImage は画面に表示するためのUI部品(オブジェクト)であり、ファイルとしてそのまま保存できません。そのため、画像ファイルをデータのかたまりであるData型に変換して保存する設計にしている。
 
 **もしこう書かなかったら：**
-（この部分を省略したり変えたりすると何が起きるか。実際に試した結果があればここに書く）
+@Modelを付けなかったら、SwiftDateの管理対象から外れるためIPhoneのストレージに書き込まれずデータが消えてしまう。
 
 ---
 
