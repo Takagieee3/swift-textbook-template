@@ -495,18 +495,46 @@ requestWhenInUseAuthorization()やstartUpdatingLocation()がないとGPSが動�
 ### SwiftDataでの画像保存
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+// ① 写真ライブラリから選択した「アイテム（PhotosPickerItem）」の変更を検知
+.onChange(of: selectedItem) { _, newItem in
+    Task {
+        // 写真データ（Data型）を非同期でロードして保持する
+        if let data = try? await newItem?.loadTransferable(type: Data.self) {
+            selectedImageData = data
+            if let uiImage = UIImage(data: data) {
+                previewImage = Image(uiImage: uiImage)
+            }
+        }
+    }
+}
+
+// ② 保存処理：取得した Data 型をそのまま SwiftData モデルに渡す
+func saveRecord() {
+    let record = PhotoRecord(
+        title: title,
+        // ...（中略）...
+        imageData: selectedImageData // Data? 型として保存
+    )
+    modelContext.insert(record)
+    dismiss()
+}
 ```
 
 **何をしているか：**
 
+・PhotosPickerで選んだ写真を、アプリで保存できるバイト列データData型に変換し、一時変数selectedImageDataに格納しています。
+・保存ボタンが押された際、そのData型をそのままPhotoRecordに渡してデータベースへ永続化しています。
+
 **なぜこう書くのか：**
+
+データベースに保存できる形式がData型だから。
+UIImageなどの画像オブジェクトはメモリ上の表現であり、そのままデータベースに保存できません。万能なデジタルデータ形式であるData型として持ち替えることで、SwiftDataに安全に保存させることができる。
 
 **もしこう書かなかったら：**
 
----
+UIImageのまま直接SwiftDataのモデルに保存しようとするとコンパイルエラーになります。
 
-（必要に応じてセクションを増やす）
+---
 
 ## 新しく学んだSwiftの文法・API
 
