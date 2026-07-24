@@ -405,28 +405,90 @@ UIImage は画面に表示するためのUI部品(オブジェクト)であり�
 ### タブ構成の設計
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+struct ContentView: View {
+    var body: some View {
+        TabView {
+            MapTab()
+                .tabItem {
+                    Label("マップ", systemImage: "map")
+                }
+            ListTab()
+                .tabItem {
+                    Label("一覧", systemImage: "list.bullet")
+                }
+        }
+    }
+}
 ```
 
 **何をしているか：**
 
+・アプリの画面下にマップと一覧を切替えるタブバーTabViewを設置している。
+・各画面MapTabとListTabにアイコンとテキストのセット.tabItemを割り当て、タップで画面を切り替えられるようにしている。
+
 **なぜこう書くのか：**
 
+・地図で探すとリストで探すという目的の異なる2つの主要画面を、ユーザーがいつでも1タップで行き来できるようにするため。
+
 **もしこう書かなかったら：**
+
+1つの画面（例:地図）しか表示できなくなり、リスト一覧を見せるためにわざわざ別画面へ遷移するボタンNavigationLinkなどを押し込まなければならず、アプリの操作性が格段に悪くなる。
 
 ---
 
 ### カメラと位置情報の連携
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+// MARK: - 位置情報マネージャー
+@Observable
+class LocationManager: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    var currentLocation: CLLocationCoordinate2D?
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+    }
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        currentLocation = locations.last?.coordinate
+    }
+}
+
+// MARK: - 記録追加画面（一部抜粋）
+// ① PhotosPickerで写真を選ぶ
+PhotosPicker(selection: $selectedItem, matching: .images) {
+    Label("写真を選択", systemImage: "photo")
+}
+
+// ② 写真選択＆保存時に「現在の位置情報」と「写真」を合体させて保存
+func saveRecord() {
+    guard let location = locationManager.currentLocation else { return }
+    let record = PhotoRecord(
+        title: title,
+        memo: memo,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        imageData: selectedImageData
+    )
+    modelContext.insert(record)
+    dismiss()
+}
 ```
 
 **何をしているか：**
 
+・バックグラウンドでスマホのGPSLocationManagerを常に動かして現在地を取得し続ける。
+・ユーザーがPhotosPickerで写真を選んで保存ボタンを押した瞬間のGPS座標currentLocationと写真データを1つの記録PhotoRecordとしてセットで保存しています。
+
 **なぜこう書くのか：**
 
+写真追加時に手動で「ここがどこか」を入力させるのではなく、アプリが全自動で撮影地（現在地）の緯度経度を判別して記録に紐付ける設計にするためです。
+
 **もしこう書かなかったら：**
+
+requestWhenInUseAuthorization()やstartUpdatingLocation()がないとGPSが動作しないため、写真を追加してもどこで撮った写真かのデータが空になり、地図連携アプリとして成立しなくなります。
 
 ---
 
