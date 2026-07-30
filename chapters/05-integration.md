@@ -540,37 +540,34 @@ UIImageのまま直接SwiftDataのモデルに保存しようとするとコン�
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`TabView` | 複数のビューをタブで切り替えるコンポーネント | `TabView { ... }.tabViewStyle(.page)` |
-| 例：`CLLocationManager` | GPS位置情報を取得するAPIManager | `let location = manager.location?.coordinate` |
-| | | |
-| | | |
-| | | |
+| `PhotosPicker` | iOS標準の写真選択画面を呼び出すSwiftUI専用コンポーネント | `PhotosPicker(selection: $selectedItem, matching: .images) { Text("写真を選択")}` |
+| `loadTransferable` | 選択された写真から、非同期で実際の画像データを安全に読み取るAPI | `if let data = try? await selectedItem?.loadTransferable(type: Data.self) {self.selectedImageData = data `|
+|`UserAnnotation` |自分の現在地をマーク |`Map(position: $cameraPosition) { UserAnnotation()` |
 
 ## 自分の実験メモ
 
-（模範コードを改変して試したことを書く）
-
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
-
-**実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：ピンの見た目を変更
+- 結果：四角になり写真が見やすくなった
+- わかったこと：systemNameの周辺を変更することにより変更ができる。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+2. ・UserAnnotation()は具体的に何をするところですか
    **得られた理解：**
+   ・スマホの移動に合わせてリアルタイムで追従するために必要である
 
-2. **質問：**
+4. **質問：**
+5. Data型で保存する場合どのくらい保存できますか
    **得られた理解：**
+   スマホの空き容量次第であるが追加し続けると容量を圧迫する
 
-3. **質問：**
+7. **質問：**
+8. CLLocationCoordinate2D以外に座標データを扱えるものはありますか
    **得られた理解：**
+   今回のような地点を表すならCLLocationCoordinate2Dを使用し、他にも3種類ほど使い分けができる。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+写真とGPS座標をリンクさせ登録することでマップ上にピンで表示させることができる。
