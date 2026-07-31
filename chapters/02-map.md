@@ -350,7 +350,7 @@ ForEach(filteredLandmarks) { landmark in
 
 **もしこう書かなかったら：**
 
-もし Marker ではなく、自分でもっと自由にデザインしたい場合（例えばスポットの写真を表示したい場合など）は、Annotation というパーツを使います。
+もしMarkerではなく、自分でもっと自由にデザインしたい場合（例えばスポットの写真を表示したい場合など）は、Annotation というパーツを使います。
 
 ---
 ```swift
@@ -408,43 +408,38 @@ ON/OFFの切り替え（トグル動作）を実現するためです。この�
 
 ---
 
-（必要に応じてセクションを増やす）
-
 ## 新しく学んだSwiftの文法・API
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`Map` | SwiftUIで地図を表示するビューコンポーネント | `Map(position: .constant(.region(region)))` |
-| 例：`Marker` | 地図上に位置をマーキングするコンポーネント | `Marker("名前", coordinate: coordinate)` |
-| | | |
-| | | |
-| | | |
+| `@Binding` | 親ビューが持っている@Stateへの参照を子ビューに渡す文法 | `struct FilterButton: View {@Binding var isOn: Boolvar body: some View {Toggle("フィルター", isOn: $isOn)}}` |
+| `Marker` | 地図上に位置をマーキングするコンポーネント | `Marker("名前", coordinate: coordinate)` |
+|`.mapStyle` | 地図の見た目を一言で変更できるモディファイア|`Map().mapStyle(.standard(elevation: .realistic))` |
+| `UIViewControllerRepresentable`| SwiftUIにまだ存在しない機能や、カメラ（UIImagePickerController）などの既存のUIKit部品をSwiftUIに持ち込むためのプロトコル| `import SwiftUI import UIKit struct CameraView: UIViewControllerRepresentable {func makeUIViewController(context: Context) -> UIImagePickerController { let picker = UIImagePickerController() picker.sourceType = .camera return picker}func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}}`|
 
 ## 自分の実験メモ
 
-（模範コードを改変して試したことを書く）
-
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
-
-**実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：スポットを選択した時にカメラを自動で移動させる
+- 結果：タップした場所が自動的に地図の中心に来るようになった。
+- わかったこと：見やすさは最初のでも良いと思うが簡単に変えられることがわかった。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+landmarkの判定について教えて
    **得られた理解：**
+タップ判定ではHashableに準拠したLandmarkを.tag(landmark)で渡すことで、Map(selection:)がタップされたピンを自動特定する。表示判定はselectedCategories.contains(...) の条件文で、配列から合致するデータだけを抽出する。
 
 2. **質問：**
+UUIDとはなんですか
    **得られた理解：**
-
+世界中で絶対に他のデータと重複しないランダムなIDを自動生成する仕組み
 3. **質問：**
+ランドマークを追加する場合  Landmark()に追加していけば良いですか
    **得られた理解：**
+Landmark.sampleDataの配列の中にLandmark(...) を追加していくだけで、地図上のマーカーやフィルター機能に自動的に反映されます。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+地図やピンを直接操作するのではなく、データを正しく管理すれば、表示はすべてSwiftUIが自動で辻褄を合わせてくれる。$をつけて Mapに渡すことで、ユーザーの操作結果がそのまま自分の変数に書き込まれる。データに一意なIDを持たせることは、SwiftUIで動的なリストや地図を扱うための絶対条件。
