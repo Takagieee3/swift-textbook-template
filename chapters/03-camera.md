@@ -404,37 +404,33 @@ SwiftUI（構造体）は「待ち伏せ」ができないから
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`PhotosPicker` | フォトライブラリから画像を選択するコンポーネント | `PhotosPicker(selection: $selectedItem, matching: .images)` |
-| 例：`UIImagePickerController` | カメラまたはフォトライブラリにアクセスするUIKitコンポーネント | `picker.sourceType = .camera` |
-| | | |
-| | | |
-| | | |
+| `PhotosPicker` | フォトライブラリから画像を選択するコンポーネント(SwiftUI専用ビュー)
+| `PhotosPicker(selection: $selectedItem, matching: .images)` |
+| `PhotosPickerItem` | 参照情報を保持する型です | `@State private var selectedItem: PhotosPickerItem?` |
+| `loadTransferable(type:)`|実際のデータData型などを安全に読み出すための非同期メソッド | `let data = try await item.loadTransferable(type: Data.self)`|
+|`fullScreenCover` |指定したフラグがtrueになった時に、画面全体を覆い隠すように全画面を表示するモディファイア| `.fullScreenCover(isPresented: $isShowingCamera) {CameraView()}`|
 
 ## 自分の実験メモ
 
 （模範コードを改変して試したことを書く）
 
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
-
-**実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：Taskやawaitを消してみてエラーを確認する
+- 結果：非同期関数を呼び出すにはawaitが必要である非同期処理はTaskの中で実行しなけらばならない。
+- わかったこと：エラーを起こし非同期処理においてTaskとawaitが重要であると理解できた。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+Taskとawaitを使う理由を教えて
    **得られた理解：**
-
-2. **質問：**
-   **得られた理解：**
+同期処理をすると写真を読み込んでいる間にフリーズしてしまうから
 
 3. **質問：**
+Transferableのデータ転送はどのような仕組みですか
    **得られた理解：**
+iOSでは、写真アプリとあなたのアプリは別々の世界に住んでいます。その境界線を越えて安全にデータを「転送」するために、最新の Transferableという仕組みが使われている。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+PhotosPickerによる安全な写真選択についてプライバシーに配慮しつつ、簡単なコードでフォトライブラリから画像を取り出せる。Taskとasync/awaitによる快適な読み込みは重い画像処理を裏側非同期で実行し、アプリのフリーズを防ぐため使用される。
